@@ -47,6 +47,27 @@ class FriendsTest extends TestCase
     }
 
     /** @test */
+    public function a_user_can_send_a_friend_request_only_once()
+    {
+        $this->withoutExceptionHandling();
+
+        $this->actingAs($user = factory(\App\User::class)->create(), 'api');
+        $anotherUser = factory(\App\User::class)->create();
+
+        $this->post('/api/friend-request', [
+            'friend_id' => $anotherUser->id,
+        ])->assertStatus(200);
+
+        $this->post('/api/friend-request', [
+            'friend_id' => $anotherUser->id,
+        ])->assertStatus(200);
+
+        $friendRequest = \App\Friend::all();
+
+        $this->assertCount(1,$friendRequest);
+    }
+
+    /** @test */
     public function only_valid_users_can_be_friend_requested()
     {
 
@@ -100,7 +121,8 @@ class FriendsTest extends TestCase
                 'friend_request_id' => $friendRequest->id,
                 'attributes' => [
                     'confirmed_at' => $friendRequest->confirmed_at->diffForHumans(),
-
+                    'friend_id' => $friendRequest->friend_id,
+                    'user_id' => $friendRequest->user_id,
                 ]
             ],
             'links' => [
